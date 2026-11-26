@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="en" data-theme="default-dark" style="color-scheme:dark"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="image" href="/guide-photos/hero-himalaya-cutout.webp" fetchPriority="high"/><link rel="stylesheet" href="/assets/styles-CLxA2CkP.css" data-precedence="default"/><link rel="stylesheet" href="/assets/index-0frNijjK.css" data-precedence="default"/><title>HERMES EXPERT ROMAN SHARK | ГИД ПОКУПАТЕЛЯ</title><meta name="author" content="Higgsfield"/><meta property="og:title" content="HERMES EXPERT ROMAN SHARK | ГИД ПОКУПАТЕЛЯ"/><meta property="og:description" content="Независимый гид Roman Shark: как проверить байера, документы и сумку перед покупкой. Не является официальным материалом Hermès."/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:site" content="@Higgsfield"/><meta property="og:image" content="/cover.png"/><meta name="twitter:image" content="/cover.png"/><meta name="description" content="Гид Roman Shark: как проверить байера, документы и сумку перед покупкой."/><link rel="modulepreload" href="/assets/index-B0EaElpa.js"/><link rel="modulepreload" href="/assets/index-D_QKyzXs.js"/><link rel="icon" href="/favicon.svg"/><script>window.__hfAuthOrigin="https://auth.higgsfield.app";// Notifications only: browser permissions and iframe policies enforce access.
+(function () {
+  try {
+    if (window.__hfAccessPatched || window.parent === window) return;
+    window.__hfAccessPatched = true;
+    var viewerOrigin = null;
+    var pending = [];
+    var reported = {};
+    function flush() {
+      if (!viewerOrigin || !pending.length) return;
+      window.parent.postMessage({
+        source: "hf-app-permissions",
+        type: "permission-request",
+        capabilities: pending.slice()
+      }, viewerOrigin);
+      pending = [];
+    }
+    function report(capabilities) {
+      capabilities.forEach(function (capability) {
+        if (!reported[capability]) {
+          reported[capability] = true;
+          pending.push(capability);
+        }
+      });
+      flush();
+    }
+    window.addEventListener("message", function (event) {
+      if (event.source !== window.parent || !/^https?:\/\//.test(event.origin)) return;
+      if (!event.data || event.data.source !== "hf-app-permissions" || event.data.type !== "init") return;
+      viewerOrigin = event.origin;
+      try { flush(); } catch (error) { /* Delivery is best-effort. */ }
+    });
+    function wrap(owner, method, capabilities) {
+      // One unavailable or read-only API must not prevent other wrappers installing.
+      try {
+        if (!owner || typeof owner[method] !== "function") return;
+        var original = owner[method];
+        owner[method] = function () {
+          try {
+            report(typeof capabilities === "function" ? capabilities(arguments) : capabilities);
+          } catch (error) { /* Preserve native results even if reporting fails. */ }
+          return original.apply(this, arguments);
+        };
+      } catch (error) { /* Some browsers expose non-writable methods. */ }
+    }
+    function mediaCapabilities(args) {
+      var constraints = args[0];
+      var capabilities = [];
+      if (constraints && constraints.video) capabilities.push("camera");
+      if (constraints && constraints.audio) capabilities.push("microphone");
+      return capabilities;
+    }
+    wrap(navigator.mediaDevices, "getUserMedia", mediaCapabilities);
+    ["getUserMedia", "webkitGetUserMedia", "mozGetUserMedia"].forEach(function (method) {
+      wrap(navigator, method, mediaCapabilities);
+    });
+    wrap(navigator.mediaDevices, "getDisplayMedia", ["screen"]);
+    wrap(navigator.mediaDevices, "enumerateDevices", ["media-devices"]);
+    wrap(navigator.mediaDevices, "selectAudioOutput", ["speakers"]);
+    ["getCurrentPosition", "watchPosition"].forEach(function (method) {
+      wrap(navigator.geolocation, method, ["location"]);
+    });
+    ["read", "readText"].forEach(function (method) {
+      wrap(navigator.clipboard, method, ["clipboard-read"]);
+    });
+    ["write", "writeText"].forEach(function (method) {
+      wrap(navigator.clipboard, method, ["clipboard-write"]);
+    });
+    wrap(window.Notification, "requestPermission", ["notifications"]);
+    wrap(window.PushManager && window.PushManager.prototype, "subscribe", ["notifications"]);
+    wrap(navigator.bluetooth, "requestDevice", ["bluetooth"]);
+    wrap(navigator.usb, "requestDevice", ["usb"]);
+    wrap(navigator.serial, "requestPort", ["serial"]);
+    wrap(navigator.hid, "requestDevice", ["hid"]);
+    wrap(navigator, "requestMIDIAccess", ["midi"]);
+    ["showOpenFilePicker", "showSaveFilePicker", "showDirectoryPicker"].forEach(function (method) {
+      wrap(window, method, ["files"]);
+    });
+    wrap(window.FileSystemHandle && window.FileSystemHandle.prototype, "requestPermission", ["files"]);
+    wrap(window.Element && window.Element.prototype, "requestFullscreen", ["fullscreen"]);
+    wrap(window.Element && window.Element.prototype, "requestPointerLock", ["pointer-lock"]);
+    wrap(navigator.wakeLock, "request", ["wake-lock"]);
+    wrap(navigator.storage, "persist", ["persistent-storage"]);
+    wrap(navigator.xr, "requestSession", ["xr"]);
+    wrap(window.DeviceMotionEvent, "requestPermission", ["motion"]);
+    wrap(window.DeviceOrientationEvent, "requestPermission", ["motion"]);
+    wrap(window.Sensor && window.Sensor.prototype, "start", ["sensors"]);
+    wrap(window.Document && window.Document.prototype, "requestStorageAccess", ["storage-access"]);
+    wrap(window.Document && window.Document.prototype, "requestStorageAccessFor", ["storage-access"]);
+  } catch (error) {
+    // Instrumentation must not prevent the rest of the SDK loading.
+  }
+})();
+
+/**
+ * Approval client SDK — the browser half of the approval flow (paired with
+ * approve.html), injected into every app page. A real file, imported as text and
+ * bundled at deploy (see injected-sdk.ts + the router wrangler). Runs in the
+ * untrusted app page: plain ES5, idempotent (window.__hfPatched), fully
+ * try/catch-wrapped, installed inline+synchronous at <head> so it's present
+ * before any app code runs.
+ *
+ * There is exactly ONE approval trigger: window.hf.requestGeneration(model,
+ * params, opts). The app calls it on the user's Generate action; the modal is
+ * visible exactly while the returned promise is pending. Approve resolves the
+ * minted single-use intent id, which the app threads to its server function and
+ * the fnf SDK adapter sends as the submit body's confirmation_token; cancel
+ * rejects with a DOMException named AbortError (a user choice, not a failure).
+ * Enforcement is entirely server-side: the outbound spend gate 403s any
+ * POST /jobs/submit that doesn't carry a matching minted approval (see
+ * outbound-worker/src/spend-gate.ts), so an app that skips the call gets a
+ * self-describing failed submit, never a silent spend. This SDK never inspects
+ * request bodies and never opens a modal on its own.
+ */
+(function () {
+  try {
+    if (window.__hfPatched) return;
+    window.__hfPatched = true;
+    var of = window.fetch;
+    if (typeof of !== "function") return;
+    // Approval surface origin (auth.<zone>, serving the consent page at
+    // /approve). Preferred source: the origin the router stamps ahead of this
+    // script (injected-sdk.ts) — apps can be served on CUSTOM DOMAINS, where
+    // deriving from the page host would fabricate a non-existent
+    // auth.<customdomain>. Host derivation stays as the fallback for stale
+    // cached HTML that predates the stamp.
+    var APPROVE =
+      typeof window.__hfAuthOrigin === "string" && window.__hfAuthOrigin.indexOf("https://") === 0
+        ? window.__hfAuthOrigin
+        : "https://auth." + location.host.split(".").slice(1).join(".");
+    window.__hfFetches = window.__hfFetches || [];
+
+    // Single-flight: at most ONE approval modal at a time. A fast double-click (or
+    // an app firing two requests) would otherwise open a second scrim+iframe stacked
+    // on the first — so a second approve() while one is open returns the in-flight
+    // promise instead of opening another modal.
+    var openModal = null;
+
+    // The modal is a cross-origin iframe of auth.<zone>/approve: the app cannot
+    // read or script it, and WHO may frame the page is pinned server-side by its
+    // frame-ancestors. The page itself obtains the authoritative price from fnf
+    // before enabling Generate; app-supplied display prices are intentionally
+    // ignored. The app DOM can still restyle, shrink or overlay this iframe, and
+    // job binding does NOT cover that (a hidden but genuine click on the app's
+    // own job is still a click): the page defends itself — Generate arms only
+    // after a delay and only while the browser vouches that the card is visible
+    // and unoccluded (IntersectionObserver v2); otherwise the commit moves to a
+    // top-level popup the app cannot overlay. See approve-ui/src/redress.ts.
+    function approve(job) {
+      if (openModal) return openModal;
+      openModal = new Promise(function (resolve, reject) {
+        var grant = null;
+        var ready = false;
+        var done = false;
+        var openedAt = Date.now();
+
+        // Three parent layers so the iframe body can stay fully TRANSPARENT and
+        // still show no white edge:
+        //  - scrim: full-screen div carrying the blur (backdrop-filter samples the
+        //    real app behind it) + a dark tint.
+        //  - wrap: a rounded, overflow:hidden div that CLIPS the iframe. The iframe
+        //    overlaps the backdrop-filter scrim, so Chromium backs its layer
+        //    opaquely; the iframe's OWN border-radius doesn't reliably clip that
+        //    layer (leaving white corners), but a parent clip does. So the corners
+        //    outside the radius are clipped away → the blurred scrim shows through,
+        //    no white ring.
+        //  - frame: the iframe, fully transparent, filling wrap. Its page paints
+        //    only the card (edge-to-edge, no radius — wrap provides the rounding).
+        var scrim = document.createElement("div");
+        scrim.style.cssText =
+          "position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,0.28);" +
+          "-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)";
+        var wrap = document.createElement("div");
+        // opacity:0 until the page reports its height so the modal fades in at its
+        // final size (no empty-frame flash, no height re-center / layout shift).
+        // Round with clip-path (not just border-radius + overflow): clip-path is
+        // applied in the COMPOSITOR, so it clips the cross-origin iframe's own
+        // layer edge cleanly. border-radius/overflow only clip the shape and leave
+        // the iframe's opaque WHITE base fringing at the rounded corners (the white
+        // peek). background = card color as a second line of defense. Both the wrap
+        // and the iframe carry the clip; keep 24px in sync with the card radius.
+        wrap.style.cssText =
+          "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);" +
+          "width:min(400px,calc(100vw - 32px));height:188px;border-radius:24px;overflow:hidden;" +
+          "-webkit-clip-path:inset(0 round 24px);clip-path:inset(0 round 24px);" +
+          "background:#23262a;opacity:0;transition:opacity 0.12s ease;z-index:2147483647";
+        var frame = document.createElement("iframe");
+        // referrerPolicy="origin": the page's frame-ancestors admits a registered
+        // CUSTOM DOMAIN only when this origin arrives as the Referer (approve.ts).
+        frame.referrerPolicy = "origin";
+        frame.src = APPROVE + "/approve";
+        frame.allowTransparency = "true";
+        frame.style.cssText =
+          "display:block;width:100%;height:100%;border:0;border-radius:24px;" +
+          "-webkit-clip-path:inset(0 round 24px);clip-path:inset(0 round 24px);background:#23262a";
+        wrap.appendChild(frame);
+        var revealTimer = null;
+
+        function cleanup() {
+          if (done) return;
+          done = true;
+          clearTimeout(revealTimer);
+          window.removeEventListener("message", onMessage);
+          document.removeEventListener("keydown", onKey, true);
+          wrap.remove();
+          scrim.remove();
+        }
+
+        function beacon(outcome) {
+          if (!grant) return;
+          try {
+            var payload = JSON.stringify({
+              grant: grant,
+              outcome: outcome,
+              ms_open: Date.now() - openedAt,
+            });
+            var url = APPROVE + "/approve/outcome";
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(url, new Blob([payload], { type: "text/plain" }));
+            } else {
+              of(url, { method: "POST", body: payload, mode: "no-cors", keepalive: true }).catch(
+                function () {},
+              );
+            }
+          } catch (e) {}
+        }
+
+        // Dismiss = the same "denied" path as the modal's Cancel button, so the
+        // caller turns it into an AbortError (a cancel, not a failure).
+        function dismiss() {
+          if (done) return;
+          cleanup();
+          beacon("denied");
+          var error = new Error("hf: denied");
+          error.hfReason = "denied";
+          reject(error);
+        }
+
+        function onKey(event) {
+          if (event.key === "Escape" || event.keyCode === 27) dismiss();
+        }
+
+        function sendRequest() {
+          if (!ready || !grant || done) return;
+          frame.contentWindow.postMessage(
+            { source: "hf-approve", type: "request", grant: grant, job: job },
+            APPROVE,
+          );
+        }
+
+        function onMessage(event) {
+          if (event.origin !== APPROVE || event.source !== frame.contentWindow) return;
+          var data = event.data || {};
+          if (data.source !== "hf-approve") return;
+          // Size the clip wrapper to the page's reported card height, and reveal
+          // ONLY once sized — modal fades in at its final height (no shift/flash).
+          if (typeof data.h === "number" && data.h > 0) {
+            wrap.style.height = data.h + "px";
+            clearTimeout(revealTimer);
+            wrap.style.opacity = "1";
+          }
+          if (data.type === "ready") {
+            ready = true;
+            sendRequest();
+            return;
+          }
+          if (data.type === "pending") {
+            // The decision moved to a top-level consent window (the iframe
+            // relays its verdict and reports a closed popup as "denied"). Keep
+            // the iframe alive for it: tearing it down on the 120 s deadline
+            // orphans the popup — Cancel/Generate there could reach nobody.
+            clearTimeout(deadline);
+            deadline = setTimeout(onDeadline, 600000);
+            return;
+          }
+          if (data.type !== "result") return;
+          cleanup();
+          if (data.ok && typeof data.intentId === "string") {
+            resolve(data.intentId);
+            return;
+          }
+          beacon("denied");
+          var error = new Error("hf: " + (data.reason || "denied"));
+          error.hfReason = data.reason || "denied";
+          reject(error);
+        }
+
+        window.addEventListener("message", onMessage);
+        // Close on background (scrim) click and on Escape. The scrim sits behind
+        // the card (wrap), so a click on it is a click OUTSIDE the modal. Escape
+        // is captured on the parent; the page also handles Escape when focus is
+        // inside the iframe (see approve-ui).
+        scrim.addEventListener("click", dismiss);
+        document.addEventListener("keydown", onKey, true);
+        document.documentElement.appendChild(scrim);
+        document.documentElement.appendChild(wrap);
+        // Fallback: reveal at the default height if the page never reports its
+        // size, so the modal is never stuck hidden.
+        revealTimer = setTimeout(function () {
+          wrap.style.opacity = "1";
+        }, 500);
+
+        of("/__auth/approval-grant", { method: "POST" })
+          .then(function (r) {
+            return r
+              .json()
+              .catch(function () {
+                return {};
+              })
+              .then(function (b) {
+                return { s: r.status, b: b };
+              });
+          })
+          .then(function (x) {
+            if (!x.b || !x.b.grant) {
+              cleanup();
+              reject(
+                new Error(
+                  x.s === 401 ? "hf: not signed in" : "hf: approval unavailable (" + x.s + ")",
+                ),
+              );
+              return;
+            }
+            grant = x.b.grant;
+            sendRequest();
+          })
+          .catch(function (error) {
+            cleanup();
+            reject(error);
+          });
+
+        function onDeadline() {
+          if (done) return;
+          cleanup();
+          beacon("timeout");
+          reject(new Error("hf: approval timeout"));
+        }
+        var deadline = setTimeout(onDeadline, 120000);
+      });
+      // Release the single-flight lock once this approval settles, so the next
+      // genuine generation can open a fresh modal.
+      var release = function () {
+        openModal = null;
+      };
+      openModal.then(release, release);
+      return openModal;
+    }
+
+    // Observability-only fetch patch: request log for debugging (__hfFetches +
+    // console). No interception, no body inspection, no classification — the
+    // approval flow is driven solely by window.hf.requestGeneration.
+    window.fetch = function (input, init) {
+      try {
+        var url = typeof input === "string" ? input : (input && input.url) || String(input);
+        var method = (init && init.method) || (input && input.method) || "GET";
+        window.__hfFetches.push({ url: url, method: method, ts: Date.now() });
+        console.log("[hf-fetch]", method, url);
+      } catch (e) {}
+      return of.apply(this, arguments);
+    };
+
+    // Public SDK. The app contract (see the builder instructions and
+    // docs/generation-approval): call this on the Generate action with the SDK
+    // WIRE shape of the exact submission (wire.jobSetType + wire.params — the
+    // approval is bound server-side to the hash of {job_set_type, params} of the
+    // actual submit body), thread the resolved intent id to the server as the
+    // confirmation token, and render a cancel quietly. opts.credits is an
+    // optional display-only estimate shown in the modal. The id is a token:
+    // never logged here, and apps must not log it either.
+    window.hf = {
+      requestGeneration: function (model, params, opts) {
+        // Fail fast on a bad job identity, BEFORE any UI. The approve page
+        // (protocol.ts) silently ignores a request whose job_set_type isn't a
+        // non-empty string or whose params don't survive structured clone —
+        // which would leave the modal stuck on "Waiting for the app…" with no
+        // way to reply. A typed rejection shows the app its own bug instead.
+        if (typeof model !== "string" || !model) {
+          return Promise.reject(
+            new TypeError("hf: requestGeneration(model, params) — model must be a non-empty string"),
+          );
+        }
+        if (typeof structuredClone === "function") {
+          try {
+            structuredClone(params);
+          } catch (e) {
+            return Promise.reject(
+              new TypeError("hf: requestGeneration params must be structured-cloneable (plain JSON)"),
+            );
+          }
+        }
+        return approve({ job_set_type: model, params: params }).then(
+          function (id) {
+            console.log("[hf] approved");
+            return id;
+          },
+          // Cancel → AbortError, per the app contract ("render a quiet cancelled
+          // state"). Other failures (not signed in, unavailable, timeout) bubble
+          // as-is — those ARE failures.
+          function (e) {
+            if (e && e.hfReason === "denied") {
+              console.log("[hf] cancelled");
+              throw new DOMException("Generation cancelled", "AbortError");
+            }
+            throw e;
+          },
+        );
+      },
+    };
+  } catch (e) {}
+})();
+</script></head><body class="bg-q-background-primary text-q-text-primary"><!--$--><div class="reading" id="reading" style="width:0%"></div><main id="top"><div class="site-spotlight" aria-hidden="true"></div><div class="wrap"><section class="hero new-hero"><div class="hero-copy"><h1 class="new-guide-title">ГИД ПОКУПАТЕЛЯ <span>HERMÈS</span></h1><p class="hero-steps"><span class="live-counter"><span aria-hidden="true">7</span><span class="visually-hidden">7</span></span> ПРОСТЫХ ШАГОВ</p><p class="lead">Узнайте, как выбрать надёжного байера, проверить сумку и документы и подготовиться к покупке Hermès. Принимайте решение уверенно и со знанием деталей.</p><div class="hero-actions"><button class="cta" type="button">Бесплатная консультация</button><a class="catalog-link" href="https://experthermes.ru/" target="_blank" rel="noopener noreferrer">Перейти в каталог</a></div></div><div class="hero-watermark" aria-hidden="true"><img src="/guide-photos/hero-himalaya-cutout.webp" alt="" fetchPriority="high" draggable="false"/></div></section><dialog class="consult-dialog" aria-labelledby="consult-dialog-title"><div class="dialog-inner"><button class="dialog-close" type="button" aria-label="Закрыть форму">×</button><h2 id="consult-dialog-title">Бесплатная консультация</h2><p>Расскажите, какую сумку вы ищете или какой вопрос хотите обсудить.</p><form class="consult-form"><div class="form-fields"><label for="_R_22aaq_-name">Как вас зовут? <input id="_R_22aaq_-name" autoComplete="given-name" placeholder="Ваше имя" required="" maxLength="80" name="name" value=""/></label><label for="_R_22aaq_-purpose">Что вас интересует?<select id="_R_22aaq_-purpose"><option selected="">Подбор сумки</option><option>Наличие и стоимость</option><option>Консультация по покупке</option><option>Другой вопрос</option></select></label><label class="full-field" for="_R_22aaq_-question">Комментарий <span class="optional">необязательно</span><textarea id="_R_22aaq_-question" name="question" rows="3" placeholder="Расскажите, чем мы можем помочь" maxLength="600"></textarea></label></div><button class="cta form-submit" type="submit">Продолжить в Telegram</button><p class="form-note">Откроется чат с Романом и готовым сообщением. Проверьте текст и отправьте его самостоятельно. Сайт не сохраняет данные формы.</p></form><a class="direct-link" href="https://t.me/HermesRoman?text=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%9F%D1%80%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%BB%D0%B0%20%D0%B2%D0%B0%D1%88%20%D0%B3%D0%B8%D0%B4%20%D0%BF%D0%BE%D0%BA%D1%83%D0%BF%D0%B0%D1%82%D0%B5%D0%BB%D1%8F%20Herm%C3%A8s%20%D0%B8%20%D1%85%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B8%D1%82%D1%8C%20%D0%B1%D0%B5%D1%81%D0%BF%D0%BB%D0%B0%D1%82%D0%BD%D1%83%D1%8E%20%D0%BA%D0%BE%D0%BD%D1%81%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%86%D0%B8%D1%8E.">Написать Роману сразу в Telegram</a></div></dialog><section class="section reveal" id="seller"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">01</span><span class="visually-hidden">01</span></span></div><div class="section-body"><h2>Проверьте байера</h2><p>Изучите Instagram и Telegram байера: как давно он работает, регулярно ли публикует реальные сделки, есть ли отзывы и отметки клиентов.</p><div class="cards"><div class="card"><h3>Что запросить</h3><p>Актуальное видео выбранной сумки, информацию о её происхождении, состоянии и комплектации, условия покупки и доставки.</p></div><div class="card"><h3>Что должно насторожить</h3><p>Новый аккаунт без истории сделок, чужие фотографии, подозрительно низкая цена, давление с оплатой или отказ от профессиональной аутентификации.</p></div></div><div class="quote attention"><span class="attention-mark" aria-hidden="true">!</span><div><b>Внимание</b><p>Возраст аккаунта сам по себе не подтверждает репутацию. Важны реальные сделки, отзывы клиентов и готовность байера к проверке сумки.</p></div></div></div></section><section class="section reveal" id="stamp"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">02</span><span class="visually-hidden">02</span></span></div><div class="section-body"><h2>Узнайте год выпуска сумки</h2><p>У большинства кожаных сумок Hermès год изготовления обозначен буквой в штампе. На современных Birkin и Kelly он часто находится внутри сумки, на винтажных — на ремешке или его обратной стороне. Конкретное расположение зависит от модели и года.</p><div class="stamp-visuals" aria-label="Схема форм годового штампа"><div><span class="stamp-symbol">W</span><b>Без рамки</b><small>Современные и ранние винтажные</small></div><div><span class="stamp-symbol circle">A</span><b>В круге</b><small>1971–1996</small></div><div><span class="stamp-symbol square">A</span><b>В квадрате</b><small>1997–2014</small></div></div><div class="decoder stamp-search"><label for="letter">Введите букву года</label><div class="stamp-input-row"><input id="letter" placeholder="Например, G" autoCapitalize="characters" autoComplete="off" maxLength="1" value=""/><span>1945–2026</span></div><div class="stamp-results" aria-live="polite"><p class="small">Введите латинскую букву. Покажем все соответствующие годы и формы штампа.</p></div></div><div class="quote attention"><span class="attention-mark" aria-hidden="true">!</span><div><b>Внимание</b><p>Год изготовления сумки и дата её покупки в бутике могут отличаться.</p></div></div></div></section><section class="section reveal" id="receipt"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">03</span><span class="visually-hidden">03</span></span></div><div class="section-body"><h2>Есть ли оригинальный чек?</h2><p>Попросите чек, если он сохранился. В зависимости от страны и способа покупки документ может отличаться языком, валютой, налогами и оформлением. Чеки из Швейцарии, Италии и Испании отличаются языком, валютой и оформлением.</p><div class="card receipt-presentation"><div class="receipt-heading"><h3>Что скрывают в бутиковом чеке</h3><p>Швейцария · пример предоставленного документа Hermès. Чувствительные данные обезличены.</p></div><div class="receipt-stack"><button class="receipt-behind receipt-behind-it" type="button" aria-label="Увеличить чек Италии"><img src="/guide-photos/new/receipt-it.webp" alt="Пример итальянского чека" loading="lazy"/></button><button class="receipt-behind receipt-behind-es" type="button" aria-label="Увеличить чек Испании"><img src="/guide-photos/new/receipt-es.webp" alt="Пример испанского чека" loading="lazy"/></button><figure class="receipt-main"><button type="button" class="photo-zoom receipt-zoom" aria-label="Увеличить чек с пояснениями"><img src="/guide-photos/new/receipt-ch-annotated.webp" alt="Чек Hermès с девятью подписанными стрелочками и обезличенными данными" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption>Швейцария · нажмите, чтобы увеличить</figcaption></figure></div><div class="receipt-country-actions"><button class="receipt-country" type="button">Италия · пример чека</button><button class="receipt-country" type="button">Испания · пример чека</button></div><div class="receipt-legend"><div class="receipt-legend-item"><span>01</span><div><b>Данные бутика</b><small>Адрес, телефон и контакты.</small></div></div><div class="receipt-legend-item"><span>02</span><div><b>Данные покупателя</b><small>Имя и адрес клиента.</small></div></div><div class="receipt-legend-item"><span>03</span><div><b>Номер тикета</b><small>Служебный идентификатор покупки.</small></div></div><div class="receipt-legend-item"><span>04</span><div><b>Номер чека</b><small>Номер документа.</small></div></div><div class="receipt-legend-item"><span>05</span><div><b>День покупки</b><small>В открытой копии оставляют месяц и год.</small></div></div><div class="receipt-legend-item"><span>06</span><div><b>Время покупки</b><small>Точное время закрывают.</small></div></div><div class="receipt-legend-item"><span>07</span><div><b>Код продавца</b><small>Служебный код в строках товаров.</small></div></div><div class="receipt-legend-item"><span>08</span><div><b>Серийный номер</b><small>В открытой копии видна только первая буква; полный код сверяют при сделке.</small></div></div><div class="receipt-legend-item"><span>09</span><div><b>Реквизиты бутика</b><small>Нижний блок с контактными и регистрационными данными.</small></div></div></div><div class="receipt-important"><b>Что важно увидеть покупателю</b><p>Месяц и год покупки, описание сумки, первая буква штампа. При сделке сопоставьте полные данные изделия с документом и экспертным заключением. Формат чеков различается в зависимости от страны.</p></div></div><div class="quote attention"><span class="attention-mark" aria-hidden="true">!</span><div><b>Важно</b><p>Наличие чека не заменяет аутентификацию самой сумки.</p></div></div></div></section><section class="section reveal" id="expert"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">04</span><span class="visually-hidden">04</span></span></div><div class="section-body"><h2>Сделайте аутентик до оплаты</h2><p>Аутентик — профессиональная проверка подлинности изделия. Мы рекомендуем обратить внимание на два сервиса: зарубежный Bababebi, специализирующийся на Hermès, и российский OSKELLY.</p><div class="cards service-cards service-pricing"><div class="card"><div class="tag">Зарубежный сервис</div><h3 class="service-name">Bababebi</h3><p>Дистанционная экспертиза изделий Hermès по фотографиям. Результат — PDF-заключение.</p><div class="price-list"><div><span>Сумки и кошельки из обычной кожи</span><b>$150</b></div><div><span>Крокодил, аллигатор, страус, ящерица и все Touch</span><b>$300</b></div><div><span>En Désordre, Rock, Picnic и специальные модели Blue Box</span><b>$300</b></div><div><span>Himalaya Crocodile, Diamond Hardware, Kelly Doll, Faubourg Birkin</span><b>$600</b></div></div><p class="price-note"><b>Экспресс за 24 часа:</b> двойной тариф. Определение цвета, размера, кожи и фурнитуры — дополнительно $50, оплачивается вместе с экспертизой.</p><p class="price-note"><b>Срок:</b> до 4 рабочих дней.</p></div><div class="card"><div class="tag">Российский сервис</div><h3 class="service-name">OSKELLY</h3><p>Дистанционная аутентификация Birkin через приложение. Стандарт — онлайн-сертификат; Премиум — сертификат с подробным обоснованием заключения.</p><div class="osk-prices"><table><thead><tr><th>Birkin</th><th>Стандарт</th><th>Премиум</th></tr></thead><tbody><tr><td>Классическая</td><td>25 000 ₽</td><td>26 000 ₽</td></tr><tr><td>Экзотическая кожа</td><td>50 000 ₽</td><td>51 000 ₽</td></tr><tr><td>Лимитированная серия</td><td>50 000 ₽</td><td>51 000 ₽</td></tr></tbody></table></div><p class="price-note"><b>Срок:</b> 24 часа.</p></div></div><p class="price-disclaimer">Тарифы по предоставленным материалам от 20.11.2026. Стоимость и условия могут измениться.</p><h3 class="photo-check-title">Какие фотографии понадобятся для аутентификации</h3><p>Подготовьте изображения именно той сумки, которую планируете купить. Выберите сервис и модель.</p><div class="expert-photo-guides"><details class="card photo-guide"><summary><span><b>Bababebi</b></span><span class="guide-expand">+</span></summary><div class="guide-photo-content"><h4 class="model-guide-title">Hermès Kelly</h4><p>Общий вид, дно, внутренняя часть, клапан, тиснение, штамп, ручка и её крепления, ремень, молния, клошет, ключи и замок.</p><button class="photo-zoom board-image" type="button" aria-label="Увеличить памятку Kelly"><img src="/guide-photos/new/baba-kelly.webp" alt="Памятка из 18 фотографий Kelly" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><h4 class="model-guide-title model-guide-separator">Hermès Birkin</h4><p>Общий вид спереди и сзади, дно, внутреннее отделение, клапан, тиснение, штамп, ручки, крепления, ремешки, молния, клошет и замок.</p><div class="board-pair"><button class="photo-zoom board-image" type="button" aria-label="Увеличить памятку Birkin, часть 1"><img src="/guide-photos/new/baba-birkin1.webp" alt="Ракурсы Birkin, часть 1" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><button class="photo-zoom board-image" type="button" aria-label="Увеличить памятку Birkin, часть 2"><img src="/guide-photos/new/baba-birkin2.webp" alt="Ракурсы Birkin, часть 2" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button></div><small class="photo-source">Пример памятки, предоставленный клиентом; маркировка автора сохранена.</small></div></details><details class="card photo-guide"><summary><span><b>OSKELLY · Hermès Birkin</b></span><span class="guide-expand">+</span></summary><div class="guide-photo-content"><p>Снимайте при хорошем освещении, без вспышки и посторонних предметов; следуйте подсказкам приложения.</p><div class="osk-photo-grid"><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Передняя часть"><img src="/guide-photos/new/osk-front.webp" alt="Передняя часть" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Передняя часть</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Задняя часть"><img src="/guide-photos/new/osk-back.webp" alt="Задняя часть" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Задняя часть</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Тиснение логотипа"><img src="/guide-photos/new/osk-stamp.webp" alt="Тиснение логотипа" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Тиснение логотипа</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Пластина на ремешке"><img src="/guide-photos/new/osk-plate.webp" alt="Пластина на ремешке" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Пластина на ремешке</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Замок"><img src="/guide-photos/new/osk-lock.webp" alt="Замок" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Замок</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Ключи"><img src="/guide-photos/new/osk-keys.webp" alt="Ключи" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Ключи</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Клошет изнутри"><img src="/guide-photos/new/osk-clochette.webp" alt="Клошет изнутри" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Клошет изнутри</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Заливка клапана"><img src="/guide-photos/new/osk-edge.webp" alt="Заливка клапана" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Заливка клапана</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Идентификационный штамп"><img src="/guide-photos/new/osk-serial.webp" alt="Идентификационный штамп" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Идентификационный штамп</b></figcaption></figure><figure class="photo-check"><button class="photo-zoom" type="button" aria-label="Увеличить: Бегунок молнии"><img src="/guide-photos/new/osk-zip.webp" alt="Бегунок молнии" loading="lazy"/><span class="zoom-mark" aria-hidden="true">+</span></button><figcaption><b>Бегунок молнии</b></figcaption></figure></div><small class="photo-source">Источник примеров: приложение OSKELLY, предоставленные скриншоты. Перечень показанных ракурсов не обязательно полный.</small></div></details></div><div class="card photo-how"><h3>Как снимать</h3><p>Используйте естественный свет, высокое разрешение и точный фокус. Без фильтров, ретуши и бликов. Дополнительно снимите внутреннюю отделку, дно, карманы, молнию и комплектные аксессуары. Если какой-то кадр нельзя получить до встречи, согласуйте с экспертом порядок проверки заранее.</p></div></div></section><aside class="mid-consult reveal" aria-label="Консультация по подбору"><div class="mid-consult-copy"><h2>Нужна помощь с выбором сумки?</h2><p>Роман поможет сориентироваться в моделях, наличии и условиях покупки.</p><a class="cta" href="https://t.me/HermesRoman?text=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%98%D0%B7%D1%83%D1%87%D0%B0%D1%8E%20%D0%B2%D0%B0%D1%88%20%D0%B3%D0%B8%D0%B4%20%D0%BF%D0%BE%D0%BA%D1%83%D0%BF%D0%B0%D1%82%D0%B5%D0%BB%D1%8F%20Herm%C3%A8s%20%D0%B8%20%D1%85%D0%BE%D1%87%D1%83%20%D0%BF%D1%80%D0%BE%D0%BA%D0%BE%D0%BD%D1%81%D1%83%D0%BB%D1%8C%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%D1%81%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D0%BE%D0%B4%D0%B1%D0%BE%D1%80%D1%83%20%D1%81%D1%83%D0%BC%D0%BA%D0%B8.">Получить консультацию</a></div><figure class="mid-consult-portrait"><img src="/guide-photos/roman-portrait-supplied.webp" alt="Мужчина в тёмном пиджаке держит коричневую сумку Hermès" loading="lazy" decoding="async"/></figure></aside><section class="section reveal" id="match"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">05</span><span class="visually-hidden">05</span></span></div><div class="section-body"><h2>Сверьте аутентик с сумкой</h2><p>На сделке, до оплаты, сравните полный штамп на сумке с фотографией или данными в заключении эксперта, если они там представлены. Сверьте также модель, размер, цвет, кожу и фурнитуру.</p><div class="cards"><div class="card"><h3>Проверьте заключение</h3><p>Убедитесь, что документ действительно выдан выбранным сервисом. Если в нём есть QR-код или ссылка для верификации, откройте их и проверьте результат.</p></div><div class="card"><h3>Исключите подмену</h3><p>При личной встрече сопоставьте сумку с фотографиями из заключения и убедитесь, что проверялся именно этот экземпляр. Сделайте это до окончательного расчёта.</p></div></div><div class="quote attention"><span class="attention-mark" aria-hidden="true">!</span><div><b>Важно</b><p>У Hermès нет публичной базы, позволяющей проверить подлинность сумки по одному штампу. Штамп — лишь один из элементов профессиональной экспертизы.</p></div></div></div></section><section class="section reveal" id="details"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">06</span><span class="visually-hidden">06</span></span></div><div class="section-body"><h2>На что смотреть в самой сумке</h2><p>Если профессиональная экспертиза пока недоступна, начните с визуального осмотра. Обратите внимание на следующие детали. Даже если внешне всё выглядит убедительно, не делайте окончательный вывод о подлинности только по фотографии.</p><div class="detail-gallery"><article class="compare detail-study"><h3>Строчка</h3><figure class="detail-example"><button type="button" class="photo-zoom" aria-label="Увеличить: Строчка"><img src="/guide-photos/stitch.jpg" alt="Строчка" loading="lazy"/><span class="zoom-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5M7 10h6M10 7v6"></path></svg></span></button><figcaption>Пример детали · Фото из каталога Roman Shark</figcaption></figure><div class="pair comparison-notes"><div class="sample"><div class="desc"><b>На что обратить внимание</b>Рассмотрите швы и крепления ручек. На участках с ручным седельным швом стежки часто имеют характерный наклон. Важно оценивать шов целиком, а не одну строчку.</div></div><div class="sample warn"><div class="desc"><b>Повод для сомнения</b>Неожиданно ровная машинная строчка, грубые перепады натяжения или неаккуратные швы требуют дополнительной проверки.</div></div></div></article><article class="compare detail-study"><h3>Тиснение и фурнитура</h3><figure class="detail-example"><button type="button" class="photo-zoom" aria-label="Увеличить: Тиснение и фурнитура"><img src="/guide-photos/metal.jpg" alt="Тиснение и фурнитура" loading="lazy"/><span class="zoom-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5M7 10h6M10 7v6"></path></svg></span></button><figcaption>Пример детали · Фото из каталога Roman Shark</figcaption></figure><div class="pair comparison-notes"><div class="sample"><div class="desc"><b>На что обратить внимание</b>Обратите внимание на чёткость тиснения и обработку металлических элементов. Расположение надписей и покрытие должны соответствовать модели.</div></div><div class="sample warn"><div class="desc"><b>Повод для сомнения</b>Неровные буквы, грубые края гравировки или несогласованное покрытие — повод обратиться к эксперту.</div></div></div></article><article class="compare detail-study"><h3>Ручки и торцы кожи</h3><figure class="detail-example"><button type="button" class="photo-zoom" aria-label="Увеличить: Ручки и торцы кожи"><img src="/guide-photos/edge.jpg" alt="Ручки и торцы кожи" loading="lazy"/><span class="zoom-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5M7 10h6M10 7v6"></path></svg></span></button><figcaption>Пример детали · Фото из каталога Roman Shark</figcaption></figure><div class="pair comparison-notes"><div class="sample"><div class="desc"><b>На что обратить внимание</b>Посмотрите на обработку краёв ручек, ремешков и клапана. Оцените аккуратность переходов и креплений.</div></div><div class="sample warn"><div class="desc"><b>Повод для сомнения</b>Наплывы краски, потёки и грубые переходы могут требовать проверки. Учитывайте следы ремонта.</div></div></div></article><article class="compare detail-study"><h3>Кожа и геометрия</h3><figure class="detail-example"><button type="button" class="photo-zoom" aria-label="Увеличить: Кожа и геометрия"><img src="/guide-photos/shape.jpg" alt="Кожа и геометрия" loading="lazy"/><span class="zoom-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5M7 10h6M10 7v6"></path></svg></span></button><figcaption>Пример детали · Фото из каталога Roman Shark</figcaption></figure><div class="pair comparison-notes"><div class="sample"><div class="desc"><b>На что обратить внимание</b>Оцените форму корпуса, качество кожи, пропорции ручек и симметрию конструкции.</div></div><div class="sample warn"><div class="desc"><b>Повод для сомнения</b>Необычная фактура или несоответствие конструкции могут быть причиной для дополнительных вопросов. Износ также влияет на форму.</div></div></div></article></div><div class="card comparison-source"><h3>Наглядные сравнения REAL / FAKE</h3><p>Legit Check By Ch публикует парные фотографии оригинальных и поддельных Birkin. Откройте нужный пример у автора и сравните конкретную деталь. Это иллюстрации для предварительного осмотра, а не самостоятельное доказательство подлинности.</p><div class="comparison-link-grid"><a class="comparison-link" href="https://legitcheck.app/wp-content/uploads/2020/03/Hermes-Burkin-Bag-Inner-Print-1200x1200.jpg" target="_blank" rel="noopener noreferrer"><span>Тиснение логотипа</span><small>REAL / FAKE ↗</small></a><a class="comparison-link" href="https://legitcheck.app/wp-content/uploads/2020/03/Hermes-Burkin-Bag-Leather-Handler-1200x1200.jpg" target="_blank" rel="noopener noreferrer"><span>Строчка ручки</span><small>REAL / FAKE ↗</small></a><a class="comparison-link" href="https://legitcheck.app/wp-content/uploads/2020/03/Hermes-Burkin-Bag-Metal-Strap-1200x1200.jpg" target="_blank" rel="noopener noreferrer"><span>Пластина ремешка</span><small>REAL / FAKE ↗</small></a><a class="comparison-link" href="https://legitcheck.app/wp-content/uploads/2020/03/Hermes-Birkin-Bag-Authenticity-Check-Guide-min-1200x1200.jpg" target="_blank" rel="noopener noreferrer"><span>Гравировка замка</span><small>REAL / FAKE ↗</small></a></div><a class="catalog-link" href="https://legitcheck.app/guides/hermes/real-vs-fake-hermes-birkin/" target="_blank" rel="noopener noreferrer">Все сравнения у автора · Legit Check</a></div><div class="quote"><b>Запах и внутренние детали.</b> Резкий запах клея или пластика может насторожить, но зависит и от хранения, ухода и ремонта. Проверьте внутреннюю отделку, карманы и комплектные аксессуары. Ни один отдельный признак не подтверждает подлинность.</div></div></section><section class="section reveal" id="final"><div class="ordinal"><span class="live-counter"><span aria-hidden="true">07</span><span class="visually-hidden">07</span></span></div><div class="section-body"><h2>Перед оплатой</h2><p>Согласуйте цену, комплектацию и условия доставки. Убедитесь, что получили положительное заключение профессионального эксперта именно по выбранной сумке. На сделке выполните финальную сверку изделия и документа до расчёта.</p></div></section><details class="guide-references"><summary>Источники информации</summary><div class="reference-links"><a href="https://www.bababebi.com/content/authentication" target="_blank" rel="noopener noreferrer">Bababebi — условия экспертизы</a><a href="https://www.bababebi.com/content/certificates-authenticity" target="_blank" rel="noopener noreferrer">Bababebi — заключения</a><a href="https://faq.oskelly.co/article/53524" target="_blank" rel="noopener noreferrer">OSKELLY — сроки проверки</a><a href="https://janefinds.com/pages/hermes-date-stamp-reference" target="_blank" rel="noopener noreferrer">JaneFinds — справочник штампов</a><a href="https://www.pursebop.com/a-collectors-guide-to-hermes-date-stamps/" target="_blank" rel="noopener noreferrer">PurseBop — справочник штампов</a></div></details></div><section class="end consultation-end" id="application"><div class="wrap consultation-layout"><div class="consultation-copy"><h2>Оставьте заявку на бесплатную консультацию</h2><p class="consultation-lead">Поможем подобрать модель, уточнить наличие и ответим на вопросы о покупке.</p><div class="consultation-actions"><a class="secondary" href="https://t.me/HermesRoman?text=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%9F%D1%80%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%BB%D0%B0%20%D0%B2%D0%B0%D1%88%20%D0%B3%D0%B8%D0%B4%20%D0%BF%D0%BE%D0%BA%D1%83%D0%BF%D0%B0%D1%82%D0%B5%D0%BB%D1%8F%20Herm%C3%A8s%20%D0%B8%20%D1%85%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B8%D1%82%D1%8C%20%D0%B1%D0%B5%D1%81%D0%BF%D0%BB%D0%B0%D1%82%D0%BD%D1%83%D1%8E%20%D0%BA%D0%BE%D0%BD%D1%81%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%86%D0%B8%D1%8E.">Связаться с Романом</a><a class="catalog-link" href="https://experthermes.ru/" target="_blank" rel="noopener noreferrer">Перейти в каталог</a></div><figure class="consultation-portrait"><img src="/guide-photos/roman-portrait-supplied.webp" alt="Мужчина в тёмном пиджаке с коричневой сумкой Hermès" loading="lazy" decoding="async"/></figure></div><div class="consultation-panel"><h3>Оставить заявку</h3><form class="consult-form"><div class="form-fields"><label for="_R_aeaq_-name">Как вас зовут? <input id="_R_aeaq_-name" autoComplete="given-name" placeholder="Ваше имя" required="" maxLength="80" name="name" value=""/></label><label for="_R_aeaq_-purpose">Что вас интересует?<select id="_R_aeaq_-purpose"><option selected="">Подбор сумки</option><option>Наличие и стоимость</option><option>Консультация по покупке</option><option>Другой вопрос</option></select></label><label class="full-field" for="_R_aeaq_-question">Комментарий <span class="optional">необязательно</span><textarea id="_R_aeaq_-question" name="question" rows="3" placeholder="Расскажите, чем мы можем помочь" maxLength="600"></textarea></label></div><button class="cta form-submit" type="submit">Продолжить в Telegram</button><p class="form-note">Откроется чат с Романом и готовым сообщением. Проверьте текст и отправьте его самостоятельно. Сайт не сохраняет данные формы.</p></form></div></div></section><footer class="wrap simple-footer"><div class="footer-contacts"><a href="https://www.instagram.com/hermes_shark_/" target="_blank" rel="noopener noreferrer">Instagram</a><a href="https://t.me/HermesRoman" target="_blank" rel="noopener noreferrer">Telegram · @HermesRoman</a></div><p class="legal">© 2026 Roman Shark. Роман Шарк — независимый байер, не является официальным представителем Hermès и не связан с модным домом. Материал носит информационный характер и не заменяет профессиональную аутентификацию.</p></footer><dialog class="photo-lightbox" aria-label="Просмотр фотографии"><button type="button" class="lightbox-close" aria-label="Закрыть фото">×</button></dialog></main><script>(function(a,f){let l;try{l=JSON.parse(sessionStorage.getItem(a)||"{}")}catch{return}const n=l?.[f||history.state?.__TSR_key];let c=!1;for(const t in n){const e=n[t],o=e?.scrollX,s=e?.scrollY;if(Number.isFinite(o)&&Number.isFinite(s)){if(t==="window")scrollTo(o,s),c=!0;else if(t)try{const r=document.querySelector(t);r&&(r.scrollLeft=o,r.scrollTop=s)}catch{}}}if(c)return;const i=location.hash.slice(1);if(i){const t=history.state?.__hashScrollIntoViewOptions??!0;if(t){const e=document.getElementById(i);e&&e.scrollIntoView(t)}return}scrollTo(0,0)})("tsr-scroll-restoration-v1_3");document.currentScript.remove()</script><!--/$--><script class="$tsr" id="$tsr-stream-barrier">(self.$R=self.$R||{})["tsr"]=[];self.$_TSR={h(){this.hydrated=!0,this.c()},e(){this.streamEnded=!0,this.c()},c(){this.hydrated&&this.streamEnded&&(delete self.$_TSR,delete self.$R.tsr)},p(e){this.initialized?e():this.buffer.push(e)},buffer:[]};$_TSR.router=($R=>$R[0]={manifest:$R[1]={routes:$R[2]={__root__:$R[3]={preloads:$R[4]=["/assets/index-B0EaElpa.js"],scripts:$R[5]=[$R[6]={attrs:$R[7]={type:"module",async:!0,src:"/assets/index-B0EaElpa.js"}}],css:$R[8]=["/assets/index-0frNijjK.css"]},"/":$R[9]={preloads:$R[10]=["/assets/index-D_QKyzXs.js"]}}},matches:$R[11]=[$R[12]={i:"__root__ ",u:1795709168431,s:"success",ssr:!0},$R[13]={i:"  ",u:1795709168431,s:"success",ssr:!0}],lastMatchId:"  "})($R["tsr"]);$_TSR.e();document.currentScript.remove()</script><script type="module" async="" src="/assets/index-B0EaElpa.js"></script></body></html>
